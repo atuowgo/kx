@@ -6,6 +6,7 @@ import (
 	"kx/commons"
 	"kx/fsds"
 	"kx/prect"
+	"kx/qbot"
 	"kx/tbot"
 	"kx/wind"
 	"os"
@@ -56,7 +57,7 @@ func process(t ProcessType,dirIn string,dirOut string) {
 	if t == ALL {
 		processAll(dirIn,dirOut)
 	} else if t == QBOT {
-		processQBOT(dirIn,dirOut)
+		processQBOT(dirIn,dirOut,true)
 	}else {
 		dirIn = dirIn + string(os.PathSeparator) + subDirInName
 		dirOut = dirOut + string(os.PathSeparator) + subDirOutName
@@ -64,8 +65,40 @@ func process(t ProcessType,dirIn string,dirOut string) {
 	}
 }
 
-func processQBOT(dirIn string,dirOut string) {
-	commons.Process(dirIn + string(os.PathSeparator) + "TBOT",dirOut + string(os.PathSeparator) + "TBOT_PER","rh",tbot.TBOTPerPointLineQueueProcess{})
+func processQBOT(dirIn string,dirOut string,setProcs bool) {
+	if setProcs {
+		runtime.GOMAXPROCS(3)
+	}
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+	go func() {
+		commons.Process(dirIn + string(os.PathSeparator) + "TBOT",dirOut + string(os.PathSeparator) + "TBOT_PER","rh",qbot.PerPointLineQueueProcess{})
+		wg.Done()
+	}()
+
+	go func() {
+		commons.Process(dirIn + string(os.PathSeparator) + "PSRF",dirOut + string(os.PathSeparator) + "PSRF_PER","rh",qbot.PerPointLineQueueProcess{})
+		wg.Done()
+	}()
+
+	go func() {
+		commons.Process(dirIn + string(os.PathSeparator) + "QBOT_WIND",dirOut + string(os.PathSeparator) + "QBOT_PER","rh",qbot.QBOTPerPointLineQueueProcess{})
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	var dirIns = [3]string{
+		dirOut + string(os.PathSeparator) + "TBOT_PER",
+		dirOut + string(os.PathSeparator) + "PSRF_PER",
+		dirOut + string(os.PathSeparator) + "QBOT_PER",
+	}
+	qbot.ProcessQbot(dirIns,dirOut + string(os.PathSeparator) + "QBOT","rh.txt")
+
+	for _,dir := range dirIns {
+		fmt.Println("remove temp dir",dir)
+		os.RemoveAll(dir)
+	}
 }
 
 func processAll(dirIn string,dirOut string) {
@@ -89,12 +122,13 @@ func processAll(dirIn string,dirOut string) {
 	}()
 
 	go func() {
-		process(QBOT,dirIn,dirOut)
 		process(WIND,dirIn,dirOut)
 		wg.Done()
 	}()
 
 	wg.Wait()
+
+	processQBOT(dirIn,dirOut,false)
 }
 
 var (
