@@ -85,7 +85,7 @@ func processQbotFile(pathIn/*T,P,Q*/ [3]string,pathOut string) {
 		}
 		//fmt.Println("idx",idx,"val",items)
 		if idx == 0 {
-			fileOut.WriteString("1901")
+			fileOut.WriteString("19010101")
 		} else {
 			rh := calculateRh(items)
 			add(rh)
