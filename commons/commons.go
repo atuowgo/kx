@@ -127,7 +127,7 @@ func initOutFileList(dirOut string,name string,indexPrefix string) ([11]*os.File
 		if err != nil {
 			panic(err)
 		}
-		file.WriteString("19790101")
+		file.WriteString("19010101")
 		res[i-1] = file
 		itemNames[i-1] = itemName
 	}
