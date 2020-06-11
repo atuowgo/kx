@@ -96,12 +96,18 @@ func processQbotFile(pathIn/*T,P,Q*/ [3]string,pathOut string) {
 }
 
 func calculateRh(items/*T,P,Q*/ [3]float64) float64 {
-	T := items[0]
+	//T := items[0] - 273.15
+	//P := items[1] / 1000
+	//q := items[2]
+	//SVP := 6.112 * math.Exp((17.67*(T-273.16)) / (T-29.66))
+	//rh := 100 * q / (0.62197*SVP / (P-0.378*SVP))
+	//return rh
+	T := items[0] - 273.15
 	P := items[1] / 1000
 	q := items[2]
-	es := 6.1078 * math.Pow(math.E,17.2693882 * (T-273.16) / (T - 35.86))
-	qs:=0.622*es / (P-0.378*es)
-	rh := 100 * q /qs
+	E := 6.112*math.Exp((17.67*T)/(T+243.5))
+	ES := q*P/(0.378*q+0.622)
+	rh := ES/E
 	return rh
 }
 
